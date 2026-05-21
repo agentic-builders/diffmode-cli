@@ -1,0 +1,49 @@
+name: CI
+
+# Reference workflow. Activates only after this subdir is extracted to the
+# public `agentic-builders/diffmode-cli` repo. In the monorepo it stays as a
+# pinned spec of what the public repo's CI must run.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Smoke-test the bundled bin
+        run: |
+          node dist/bin.js --version
+          node dist/bin.js --version --json
+          node dist/bin.js --help
