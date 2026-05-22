@@ -933,7 +933,14 @@ describe("package.json publish-readiness", () => {
   it("metadata fields are populated for npm publish", () => {
     const p = pkg();
     expect(p.license).toBe("Apache-2.0");
-    expect(String(p.repository)).toContain("agentic-builders/diffmode-cli");
+    // `repository` may be either a string ("git+https://...") or an object
+    // ({type, url}) — both are valid npm conventions. Stringify the url when
+    // the object form is used so the substring assertion works either way.
+    const repoUrl =
+      typeof p.repository === "string"
+        ? p.repository
+        : (p.repository as { url?: string } | null)?.url ?? "";
+    expect(repoUrl).toContain("agentic-builders/diffmode-cli");
     expect(String(p.homepage)).toContain("agentic-builders/diffmode-cli");
     expect(String(p.bugs)).toContain("agentic-builders/diffmode-cli");
     expect((p.bin as Record<string, string>).diffmode).toBe("dist/bin.js");
