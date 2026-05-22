@@ -1,8 +1,9 @@
 name: CI
 
-# Reference workflow. Activates only after this subdir is extracted to the
-# public `agentic-builders/diffmode-cli` repo. In the monorepo it stays as a
-# pinned spec of what the public repo's CI must run.
+# Runs on every push to main + every PR. Tests against Node 20 (production
+# target) and 22 (next LTS). prepublishOnly in package.json wires the same
+# chain into `npm publish`, so a failing CI run also fails any subsequent
+# release via .github/workflows/publish.yml.
 
 on:
   push:
