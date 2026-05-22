@@ -34,8 +34,14 @@ import {
   skillInstallCommand,
   type SkillTargetSelector,
 } from "./commands/skill";
+import packageJson from "../package.json";
 
-const VERSION = "0.1.0";
+// VERSION is sourced from package.json so `npm version <bump>` is the
+// single source of truth. esbuild inlines the JSON into the bundle at
+// build time. Do NOT reintroduce a hardcoded constant here — a regression
+// test in test/acceptance.test.ts asserts `dist/bin.js --version` matches
+// `package.json#version`.
+const VERSION: string = packageJson.version;
 
 interface GlobalOpts {
   json?: boolean;

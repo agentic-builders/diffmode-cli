@@ -29,7 +29,10 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "sync:companions": "tsx scripts/sync-companions.ts",
-    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build"
+    "verify": "npm run lint && npm run typecheck && npm run build && npm test",
+    "preversion": "npm run verify",
+    "prepublishOnly": "npm run verify",
+    "release": "bash scripts/release.sh"
   },
   "dependencies": {
     "commander": "^14.0.0"

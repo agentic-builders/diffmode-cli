@@ -5,6 +5,23 @@ All notable changes to the `diffmode` CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-05-22
+
+### Fixed
+
+- **`diffmode --version` printed `0.1.0` in v0.1.1** by @ivan-magda in https://github.com/agentic-builders/diffmode-cli/releases/tag/v0.1.2 — `VERSION` was hardcoded in `src/bin.ts`, but `npm version <bump>` only updates `package.json` and `package-lock.json`, so the two drifted on every release. Now `VERSION` is imported from `package.json` and esbuild inlines the current value into the bundle at build time. Single source of truth; this drift class is structurally impossible going forward.
+
+### Added
+
+- **Regression test for version sync** — `test/acceptance.test.ts` rebuilds and asserts `dist/bin.js --version` matches `package.json#version`. Catches the bug above if a hardcoded constant is ever reintroduced.
+- **`verify` script** — canonical `lint + typecheck + build + test` chain. Both `preversion` and `prepublishOnly` delegate to it (DRY).
+- **`preversion` lifecycle hook** — runs `verify` before `npm version` writes the tag. Drift now fails locally before the tag exists on GitHub (vs. failing at publish time after the tag is already pushed).
+- **`scripts/release.sh`** (invoked via `npm run release <patch|minor|major>`) — wraps `npm version` + `git push --follow-tags` with safety guards: refuses if not on `main`, working tree is dirty, origin is ahead, or `CHANGELOG.md` is missing an entry for the next version.
+
+### Changed
+
+- `prepublishOnly` simplified to `npm run verify` (was inline `lint && typecheck && test && build`); order is now `build` before `test` so the version-sync regression test runs against a fresh bundle.
+
 ## [0.1.1] - 2026-05-22
 
 ### Added
@@ -39,5 +56,6 @@ Initial public release. Agent-drivable thin HTTP client over the Diffmode `/publ
 
 ## Version History
 
+- **v0.1.2** (2026-05-22) - Fix `--version` drift (single source of truth from `package.json`); add `preversion` hook + `release.sh` + regression test so the bug class can't recur
 - **v0.1.1** (2026-05-22) - Bootstrap CHANGELOG.md; first release via the CI publish workflow with npm provenance
 - **v0.1.0** (2026-05-22) - Initial public release: full Phase 1 surface (auth, submit, jobs, results, billing, agent companions, self-describing manifest)

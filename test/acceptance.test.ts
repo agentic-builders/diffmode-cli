@@ -948,4 +948,21 @@ describe("package.json publish-readiness", () => {
     expect((p.files as string[]).includes("dist/")).toBe(true);
     expect((p.files as string[]).includes("skills/")).toBe(true);
   });
+
+  // Regression guard for the v0.1.0 → v0.1.1 drift: VERSION used to be a
+  // hardcoded constant in src/bin.ts that npm version did not touch, so the
+  // bundled bin reported the wrong version on every release. The fix imports
+  // VERSION from package.json at build time; this test enforces that the
+  // single source of truth survives any future refactor.
+  it("dist/bin.js --version output matches package.json#version", () => {
+    // Rebuild from current source + package.json so a stale dist/ on disk
+    // can't mask a regression.
+    execFileSync("npm", ["run", "build"], { cwd: repoRoot, stdio: "pipe" });
+    const binPath = resolve(repoRoot, "dist/bin.js");
+    const r = spawnSync(process.execPath, [binPath, "--version"], {
+      encoding: "utf8",
+    });
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe(String(pkg().version));
+  });
 });
