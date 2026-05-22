@@ -206,6 +206,10 @@ auto-generates the key.
 
 Report security issues per [`SECURITY.md`](SECURITY.md).
 
+## Releases
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the per-version history.
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
