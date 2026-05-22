@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "description": "Agent-drivable CLI for the Diffmode growth pipeline",
   "license": "Apache-2.0",
-  "repository": "git+https://github.com/agentic-builders/diffmode-cli.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agentic-builders/diffmode-cli.git"
+  },
   "homepage": "https://github.com/agentic-builders/diffmode-cli#readme",
   "bugs": "https://github.com/agentic-builders/diffmode-cli/issues",
   "engines": {
