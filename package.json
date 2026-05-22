@@ -25,7 +25,8 @@
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
-    "sync:companions": "tsx scripts/sync-companions.ts"
+    "sync:companions": "tsx scripts/sync-companions.ts",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "commander": "^14.0.0"
