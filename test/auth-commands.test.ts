@@ -62,6 +62,7 @@ describe("login", () => {
       http.get(`${API_BASE}/access-tokens`, ({ request }) => {
         sawBearer = request.headers.get("authorization");
         return HttpResponse.json({
+          user_id: "51d2aabb6f4c4e7a9c1d8b2f0a3e5d7c",
           tokens: [
             {
               id: "t-1",
@@ -100,6 +101,7 @@ describe("login", () => {
     expect(parsed.authenticated).toBe(true);
     expect(parsed.tokens_registered).toBe(2);
     expect(await store.load()).toBe("dm_pat_login_token_aaaaaaaaaaaaaaaa");
+    expect(parsed.user_id).toBe("51d2aabb6f4c4e7a9c1d8b2f0a3e5d7c");
   });
 
   it("never echoes the raw PAT on stdout after acceptance", async () => {
@@ -231,6 +233,7 @@ describe("whoami", () => {
     server.use(
       http.get(`${API_BASE}/access-tokens`, () =>
         HttpResponse.json({
+          user_id: "51d2aabb6f4c4e7a9c1d8b2f0a3e5d7c",
           tokens: [
             {
               id: "t-1",
@@ -255,6 +258,7 @@ describe("whoami", () => {
     expect(parsed.tokens_registered).toBe(1);
     expect(parsed.current_token_prefix).toBe("dm_pat_party");
     expect(parsed.current_token_prefix).not.toContain("zzzzzzzz");
+    expect(parsed.user_id).toBe("51d2aabb6f4c4e7a9c1d8b2f0a3e5d7c");
   });
 
   it("exits 4 when no token stored (no probe attempted)", async () => {

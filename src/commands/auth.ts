@@ -18,6 +18,7 @@ interface AccessTokenMetadata {
 }
 
 interface ListTokensResponse {
+  user_id: string;
   tokens: AccessTokenMetadata[];
 }
 
@@ -77,6 +78,7 @@ export async function loginCommand(opts: LoginOptions): Promise<void> {
     authenticated: true,
     tokens_registered: listed.tokens.length,
     current_token_prefix: tokenPrefix(opts.token),
+    user_id: listed.user_id,
   });
 }
 
@@ -121,6 +123,7 @@ export async function whoamiCommand(opts: WhoamiOptions = {}): Promise<void> {
     authenticated: true,
     tokens_registered: listed.tokens.length,
     current_token_prefix: tokenPrefix(token),
+    user_id: listed.user_id,
   });
 }
 
