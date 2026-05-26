@@ -17,6 +17,7 @@ export async function accountCommand(opts: AccountCommandOptions): Promise<void>
   try {
     const balance = await fetchBalance(client);
     printJson({
+      user_id: balance.user_id,
       balance: balance.balance,
       has_stripe_customer: balance.has_stripe_customer,
       has_purchased: balance.has_purchased,
