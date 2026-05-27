@@ -3,6 +3,7 @@ import type { HttpClient } from "./http";
 import { InsufficientCreditsError, PricingUnavailableError } from "./errors";
 
 export interface CreditBalancePayload {
+  user_id: string;
   balance: number;
   has_stripe_customer: boolean;
   has_purchased: boolean;

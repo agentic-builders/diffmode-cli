@@ -55,6 +55,7 @@ describe("diffmode account", () => {
     server.use(
       http.get(`${API_BASE}/billing/balance`, () =>
         HttpResponse.json({
+          user_id: "51d2aabb6f4c4e7a9c1d8b2f0a3e5d7c",
           balance: 42,
           has_stripe_customer: true,
           has_purchased: true,
@@ -75,6 +76,7 @@ describe("diffmode account", () => {
     expect(parsed.balance).toBe(42);
     expect(parsed.has_stripe_customer).toBe(true);
     expect(parsed.has_purchased).toBe(true);
+    expect(parsed.user_id).toBe("51d2aabb6f4c4e7a9c1d8b2f0a3e5d7c");
   });
 
   it("on 401 exits 4 with auth error", async () => {

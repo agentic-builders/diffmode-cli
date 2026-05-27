@@ -5,6 +5,12 @@ All notable changes to the `diffmode` CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-05-26
+
+### Added
+
+- **`user_id` in identity command output** — `diffmode whoami`, `diffmode login`, and `diffmode account` now include the authenticated user's full 32-char hex UUID in their JSON envelopes by @ivan-magda in https://github.com/agentic-builders/diffmode-cli/pull/1. Closes the gap where CLI output showed only `current_token_prefix` (e.g. `dm_pat_YwSRl`) and couldn't answer "whose account is this?" without a second tool. Additive on `schema_version: "1"`; old clients ignore the new field. Requires backend with [hyperskill/ai-cmo#315](https://github.com/hyperskill/ai-cmo/pull/315) deployed.
+
 ## [0.1.2] - 2026-05-22
 
 ### Fixed
@@ -56,6 +62,7 @@ Initial public release. Agent-drivable thin HTTP client over the Diffmode `/publ
 
 ## Version History
 
+- **v0.1.3** (2026-05-26) - Add `user_id` (full 32-char hex UUID) to `whoami`, `login`, and `account` JSON output; requires backend support shipped in hyperskill/ai-cmo#315
 - **v0.1.2** (2026-05-22) - Fix `--version` drift (single source of truth from `package.json`); add `preversion` hook + `release.sh` + regression test so the bug class can't recur
 - **v0.1.1** (2026-05-22) - Bootstrap CHANGELOG.md; first release via the CI publish workflow with npm provenance
 - **v0.1.0** (2026-05-22) - Initial public release: full Phase 1 surface (auth, submit, jobs, results, billing, agent companions, self-describing manifest)
