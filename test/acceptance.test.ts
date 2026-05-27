@@ -138,6 +138,13 @@ describe("Phase 1 end-to-end agent flow (login → run → watch → results)", 
           balance: 50,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () =>
@@ -283,6 +290,13 @@ describe("Phase 1 end-to-end agent flow (login → run → watch → results)", 
           balance: 5,
           has_stripe_customer: false,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/analyze-website`, () =>
@@ -378,6 +392,13 @@ describe("spec §8 exit-code matrix — at least one reachable test per code", (
           balance: 100,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/products/:pid/unlock`, () =>
@@ -401,6 +422,13 @@ describe("spec §8 exit-code matrix — at least one reachable test per code", (
           balance: 100,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () => HttpResponse.error()),
@@ -424,6 +452,13 @@ describe("spec §8 exit-code matrix — at least one reachable test per code", (
           balance: 100,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () =>
@@ -452,6 +487,13 @@ describe("spec §8 exit-code matrix — at least one reachable test per code", (
           balance: 100,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () =>
@@ -509,6 +551,13 @@ describe("spec §8 exit-code matrix — at least one reachable test per code", (
           balance: 100,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () =>
@@ -539,6 +588,14 @@ describe("spec §8 exit-code matrix — at least one reachable test per code", (
           balance: 0,
           has_stripe_customer: false,
           has_purchased: false,
+          // Web-channel costs so balance=0 trips the gate (CLI run is free).
+          credit_costs: {
+            workflow: 15,
+            unlock: 15,
+            "idea-eval": 5,
+            "smoke-test": 1,
+            run: 1,
+          },
         }),
       ),
     );
@@ -563,6 +620,13 @@ describe("spec §8 exit-code matrix — at least one reachable test per code", (
           balance: 100,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () =>
@@ -695,6 +759,13 @@ describe("schema_version envelope is present on every command's JSON output", ()
           balance: 5,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () =>

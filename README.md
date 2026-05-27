@@ -54,13 +54,13 @@ Requires Node ≥ 20.
 
 ## Commands overview
 
-| Command | What it does | Credits |
+| Command | What it does | Credits (CLI) |
 | --- | --- | --- |
 | `diffmode login` / `logout` / `whoami` | PAT-based authentication | — |
-| `diffmode run <product>` | Free-tier diagnostic | 1 |
-| `diffmode unlock <product>` | Full plan (needs prior `run`) | 15 |
-| `diffmode workflow <product>` | Cold-start full workflow | 15 |
-| `diffmode idea-eval <product>` | Score ideas vs. founder context | 5 |
+| `diffmode run <product>` | Free-tier diagnostic | 0 |
+| `diffmode unlock <product>` | Full plan (needs prior `run`) | 2 |
+| `diffmode workflow <product>` | Cold-start full workflow | 2 |
+| `diffmode idea-eval <product>` | Score ideas vs. founder context | 1 |
 | `diffmode smoke-test <product>` | Quick tactic smoke-test | 1 |
 | `diffmode jobs list/status/watch/resume/cancel` | Job lifecycle | — |
 | `diffmode results <product>` | Download + manifest | — |
@@ -70,12 +70,16 @@ Requires Node ≥ 20.
 | `diffmode skill show` / `skill install` | Agent skill installer | — |
 | `diffmode commands` | Machine-readable manifest | — |
 
+The credit column above is informational. **Actual cost is fetched live from the server** via `GET /billing/balance` (the response includes a `credit_costs` matrix for the caller's channel). CLI callers (PAT-authenticated) pay materially less than web callers — a `$199 / 15-credit` pack runs ~7 full pipelines from the CLI vs 1 from the browser. The table above shows current CLI prices; web prices are higher (workflow/unlock=15, idea-eval=5).
+
 Full per-command reference: [`skills/diffmode/references/commands.md`](skills/diffmode/references/commands.md).
 
 Submit commands (`run`, `workflow`, `unlock`, `idea-eval`, `smoke-test`) do a
 pre-flight `GET /billing/balance` before posting and exit 8 if the wallet
 balance is below the module cost. Pass `--no-preflight` to skip it when the
-agent has already verified credits this turn.
+agent has already verified credits this turn. If the server's pricing table
+is unreachable, the CLI exits with code 11 (`pricing_unavailable`) instead
+of falling back to a stale local constant.
 
 ## Exit codes
 
@@ -92,6 +96,7 @@ agent has already verified credits this turn.
 | `8` | Insufficient credits (top up via the browser) |
 | `9` | Server (5xx) |
 | `10` | Interrupted but resumable (`diffmode jobs resume`) |
+| `11` | Pricing config unavailable (server's `credit_costs` table unreachable) |
 | `130` | SIGINT (Ctrl-C; never cancels the server-side job) |
 
 Full per-code recovery guidance: [`skills/diffmode/references/error-codes.md`](skills/diffmode/references/error-codes.md).

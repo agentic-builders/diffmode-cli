@@ -6,12 +6,14 @@ import { printJson, SCHEMA_VERSION } from "../lib/output";
 // branch on. Update alongside per-command behavior (the drift-check in Task 8
 // keeps this honest against references/error-codes.md).
 const EXIT_CODES_BY_COMMAND: Record<string, number[]> = {
-  // submit commands (POST → 202, plus 402/409/429)
-  run: [0, 1, 2, 3, 4, 5, 7, 8, 9],
-  workflow: [0, 1, 2, 3, 4, 5, 7, 8, 9],
-  unlock: [0, 1, 2, 3, 4, 5, 7, 8, 9],
-  "idea-eval": [0, 1, 2, 3, 4, 5, 7, 8, 9],
-  "smoke-test": [0, 1, 2, 3, 4, 5, 7, 8, 9],
+  // submit commands (POST → 202, plus 402/409/429). Exit 11 covers both the
+  // pre-flight balance fetch and the server-side cost lookup returning 503
+  // `Pricing configuration unavailable` (mapped in http.ts).
+  run: [0, 1, 2, 3, 4, 5, 7, 8, 9, 11],
+  workflow: [0, 1, 2, 3, 4, 5, 7, 8, 9, 11],
+  unlock: [0, 1, 2, 3, 4, 5, 7, 8, 9, 11],
+  "idea-eval": [0, 1, 2, 3, 4, 5, 7, 8, 9, 11],
+  "smoke-test": [0, 1, 2, 3, 4, 5, 7, 8, 9, 11],
 
   // jobs sub-tree
   "jobs list": [0, 1, 3, 4, 9],
@@ -23,11 +25,12 @@ const EXIT_CODES_BY_COMMAND: Record<string, number[]> = {
   // results
   results: [0, 1, 2, 3, 4, 6, 9],
 
-  // billing read-only
-  account: [0, 1, 3, 4, 9],
-  "billing balance": [0, 1, 3, 4, 9],
+  // billing read-only — each calls `/billing/balance`, which fails closed
+  // with 503 when the pricing table is unreachable (exit 11).
+  account: [0, 1, 3, 4, 9, 11],
+  "billing balance": [0, 1, 3, 4, 9, 11],
   "billing history": [0, 1, 3, 4, 9],
-  limits: [0, 1, 3, 4, 9],
+  limits: [0, 1, 3, 4, 9, 11],
 
   // auth
   login: [0, 1, 2, 3, 4, 9],

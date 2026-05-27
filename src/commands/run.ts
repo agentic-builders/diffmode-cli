@@ -5,7 +5,7 @@ import {
   failWith,
   type SubmitCommandResponse,
 } from "../lib/submit-helpers";
-import { preflightCredits, MODULE_CREDIT_COSTS } from "../lib/preflight";
+import { preflightCredits } from "../lib/preflight";
 import { resolveBillingUrl } from "../lib/billing-url";
 
 export interface RunCommandOptions {
@@ -36,7 +36,7 @@ export async function runCommand(opts: RunCommandOptions): Promise<void> {
     if (!opts.noPreflight) {
       await preflightCredits({
         client,
-        required: MODULE_CREDIT_COSTS["run"]!,
+        action: "run",
         billingUrl: resolveBillingUrl(),
       });
     }

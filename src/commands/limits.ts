@@ -26,6 +26,7 @@ export async function limitsCommand(opts: LimitsCommandOptions): Promise<void> {
       rate_limit_window_h: RATE_LIMIT_WINDOW_H,
       rate_limit_max: RATE_LIMIT_MAX,
       billing_url: resolveBillingUrl(),
+      credit_costs: balance.credit_costs,
     });
   } catch (err) {
     printError(err);

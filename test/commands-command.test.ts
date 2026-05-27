@@ -115,6 +115,29 @@ describe("buildCommandsManifest", () => {
     expect(watch!.exits).toContain(130);
   });
 
+  it("commands that hit /billing/balance or the cost lookup include exit 11 (pricing_unavailable)", () => {
+    const m = buildCommandsManifest(buildProgram());
+    // Submit commands: preflight + server-side cost lookup both surface 11.
+    // Read-only billing commands: fetchBalance surfaces 11 when the pricing
+    // table is unreachable. `billing history` does not touch pricing.
+    for (const name of [
+      "run",
+      "workflow",
+      "unlock",
+      "idea-eval",
+      "smoke-test",
+      "account",
+      "billing balance",
+      "limits",
+    ]) {
+      const cmd = m.commands.find((c) => c.name === name);
+      expect(cmd, name).toBeDefined();
+      expect(cmd!.exits, `${name} should list exit 11`).toContain(11);
+    }
+    const history = m.commands.find((c) => c.name === "billing history");
+    expect(history!.exits, "billing history does not touch pricing").not.toContain(11);
+  });
+
   it("`run` --no-preflight option is classified as boolean (negate flag)", () => {
     const m = buildCommandsManifest(buildProgram());
     const run = m.commands.find((c) => c.name === "run");

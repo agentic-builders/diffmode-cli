@@ -5,7 +5,7 @@ import {
   type SubmitCommandResponse,
 } from "../lib/submit-helpers";
 import { UsageError, isDiffmodeError } from "../lib/errors";
-import { preflightCredits, MODULE_CREDIT_COSTS } from "../lib/preflight";
+import { preflightCredits } from "../lib/preflight";
 import { resolveBillingUrl } from "../lib/billing-url";
 
 export interface UnlockCommandOptions {
@@ -36,7 +36,7 @@ export async function unlockCommand(opts: UnlockCommandOptions): Promise<void> {
     if (!opts.noPreflight) {
       await preflightCredits({
         client,
-        required: MODULE_CREDIT_COSTS["unlock"]!,
+        action: "unlock",
         billingUrl: resolveBillingUrl(),
       });
     }
