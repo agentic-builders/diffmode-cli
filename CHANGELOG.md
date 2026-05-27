@@ -5,6 +5,19 @@ All notable changes to the `diffmode` CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-05-27
+
+### Changed
+
+- **Channel-based credit pricing — CLI users now pay materially less per action** by @ivan-magda in https://github.com/agentic-builders/diffmode-cli/pull/2. The backend now derives a `channel` from the auth principal (PAT → `cli`, Supabase JWT → `web`) and resolves per-action costs from a Supabase `credit_costs` table. CLI rates: `workflow=2`, `unlock=2`, `idea-eval=1`, `smoke-test=1`, `run=0` (vs web `15/15/5/1/1`). The same `$199 / 15 credits` pack now buys roughly seven full pipeline runs from the CLI vs one from the web UI. Requires backend with [hyperskill/ai-cmo#314](https://github.com/hyperskill/ai-cmo/pull/314) deployed.
+- **Strict server-only cost resolution — `MODULE_CREDIT_COSTS` constant deleted from `src/lib/preflight.ts`.** Costs are now read exclusively from the new `credit_costs` field on `GET /billing/balance`. There is no local fallback — if the field is missing (e.g. a new CLI hitting an old backend), `preflightCredits()` fails closed with `PricingUnavailableError`.
+- **`preflightCredits()` signature** — now takes `action: "workflow" | "unlock" | "idea-eval" | "smoke-test" | "run"` instead of `required: number`. Internal API only; not exposed to end users.
+
+### Added
+
+- **`PricingUnavailableError` + exit code 11 (`PRICING_UNAVAILABLE`)** — surfaced when the backend response lacks `credit_costs` or the specific action key. Lets agents distinguish "I can't find out what this costs" from "you're out of credits" (exit 8) or "you're rate-limited" (exit 9).
+- **`diffmode limits --json` now includes `credit_costs`** — the per-channel cost matrix is returned verbatim from the server, so agents can make pricing decisions without a second call.
+
 ## [0.1.3] - 2026-05-26
 
 ### Added
