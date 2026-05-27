@@ -10,6 +10,7 @@ export const ExitCode = {
   INSUFFICIENT_CREDITS: 8,
   SERVER: 9,
   INTERRUPTED_RESUMABLE: 10,
+  PRICING_UNAVAILABLE: 11,
   SIGINT: 130,
 } as const;
 

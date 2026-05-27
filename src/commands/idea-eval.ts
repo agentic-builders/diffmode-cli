@@ -6,7 +6,7 @@ import {
   type SubmitCommandResponse,
 } from "../lib/submit-helpers";
 import { UsageError } from "../lib/errors";
-import { preflightCredits, MODULE_CREDIT_COSTS } from "../lib/preflight";
+import { preflightCredits } from "../lib/preflight";
 import { resolveBillingUrl } from "../lib/billing-url";
 
 export interface IdeaInputPayload {
@@ -107,7 +107,7 @@ export async function ideaEvalCommand(
     if (!opts.noPreflight) {
       await preflightCredits({
         client,
-        required: MODULE_CREDIT_COSTS["idea-eval"]!,
+        action: "idea-eval",
         billingUrl: resolveBillingUrl(),
       });
     }

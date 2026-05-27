@@ -248,6 +248,13 @@ describe("resolveActiveToken wiring (regression: env token reaches non-auth hand
           balance: 1,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         });
       }),
     );

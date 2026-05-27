@@ -4,10 +4,19 @@ import {
   InsufficientCreditsError,
   NetworkError,
   NotFoundError,
+  PricingUnavailableError,
   RateLimitedError,
   ServerError,
   UsageError,
 } from "./errors";
+
+// Backend's PricingConfigError (api/credit_cost_store.py) returns
+// HTTP 503 with this exact detail string. The CLI must surface it as
+// PricingUnavailableError (exit 11), not as a generic ServerError
+// (exit 9), so users see the fail-closed pricing condition the README
+// promises ("If the server's pricing table is unreachable, the CLI
+// exits with code 11").
+const PRICING_UNAVAILABLE_DETAIL = "Pricing configuration unavailable";
 
 export const DEFAULT_API_BASE = "https://ai-cmo-api.onrender.com/public/v1";
 export const DEFAULT_BILLING_URL = "https://diffmode.app/app/billing";
@@ -288,6 +297,9 @@ export class HttpClient {
         retryAfter = envelope.error.retry_after;
       }
       return new RateLimitedError(detail, retryAfter);
+    }
+    if (status === 503 && detail.includes(PRICING_UNAVAILABLE_DETAIL)) {
+      return new PricingUnavailableError(detail);
     }
     if (status >= 500) {
       const retryable = envelope.error?.retryable ?? true;

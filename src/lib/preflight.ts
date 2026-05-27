@@ -1,25 +1,30 @@
+// Cost resolution is server-authoritative — see `/billing/balance.credit_costs`.
 import type { HttpClient } from "./http";
-import { InsufficientCreditsError } from "./errors";
+import { InsufficientCreditsError, PricingUnavailableError } from "./errors";
 
 export interface CreditBalancePayload {
   balance: number;
   has_stripe_customer: boolean;
   has_purchased: boolean;
+  credit_costs: {
+    workflow: number;
+    unlock: number;
+    "idea-eval": number;
+    "smoke-test": number;
+    run: number;
+  };
 }
 
-export const MODULE_CREDIT_COSTS: Readonly<Record<string, number>> = Object.freeze(
-  {
-    run: 1,
-    "smoke-test": 1,
-    "idea-eval": 5,
-    unlock: 15,
-    workflow: 15,
-  },
-);
+export type PreflightAction =
+  | "workflow"
+  | "unlock"
+  | "idea-eval"
+  | "smoke-test"
+  | "run";
 
 export interface PreflightCreditsArgs {
   client: HttpClient;
-  required: number;
+  action: PreflightAction;
   billingUrl: string;
 }
 
@@ -38,15 +43,27 @@ export async function preflightCredits(
   args: PreflightCreditsArgs,
 ): Promise<PreflightCreditsResult> {
   const payload = await fetchBalance(args.client);
-  if (payload.balance < args.required) {
+  const costs = payload.credit_costs;
+  if (!costs) {
+    throw new PricingUnavailableError(
+      "Pricing data missing from server response. Update diffmode CLI or check backend version.",
+    );
+  }
+  const required = costs[args.action];
+  if (required === undefined) {
+    throw new PricingUnavailableError(
+      `Pricing data missing for action '${args.action}'. Update diffmode CLI or check backend version.`,
+    );
+  }
+  if (payload.balance < required) {
     throw new InsufficientCreditsError(
-      `Insufficient credits (need ${args.required}, have ${payload.balance}). Top up at ${args.billingUrl}`,
+      `Insufficient credits (need ${required}, have ${payload.balance}). Top up at ${args.billingUrl}`,
       args.billingUrl,
     );
   }
   return {
     balance: payload.balance,
-    required: args.required,
+    required,
     has_purchased: payload.has_purchased,
   };
 }

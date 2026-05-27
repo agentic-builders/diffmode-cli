@@ -9,6 +9,7 @@ export type DiffmodeErrorCode =
   | "not_found"
   | "rate_limited"
   | "insufficient_credits"
+  | "pricing_unavailable"
   | "server"
   | "interrupted";
 
@@ -159,6 +160,18 @@ export class InsufficientCreditsError extends DiffmodeError {
       billing_url: billingUrl,
     });
     this.name = "InsufficientCreditsError";
+  }
+}
+
+export class PricingUnavailableError extends DiffmodeError {
+  constructor(message: string) {
+    super({
+      code: "pricing_unavailable",
+      message,
+      retryable: false,
+      exitCode: ExitCode.PRICING_UNAVAILABLE,
+    });
+    this.name = "PricingUnavailableError";
   }
 }
 

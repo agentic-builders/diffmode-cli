@@ -58,6 +58,13 @@ describe("diffmode account", () => {
           balance: 42,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
     );
@@ -94,6 +101,13 @@ describe("diffmode billing balance", () => {
           balance: 7,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
     );
@@ -204,6 +218,13 @@ describe("diffmode limits", () => {
           balance: 4,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
     );
@@ -218,6 +239,14 @@ describe("diffmode limits", () => {
     expect(parsed.billing_url).toBe("https://diffmode.app/app/billing");
     // Plan: does NOT estimate free_submits_remaining
     expect(parsed.free_submits_remaining).toBeUndefined();
+    // Channel-aware credit costs surfaced verbatim from /billing/balance.
+    expect(parsed.credit_costs).toEqual({
+      workflow: 2,
+      unlock: 2,
+      "idea-eval": 1,
+      "smoke-test": 1,
+      run: 0,
+    });
   });
 
   it("respects DIFFMODE_BILLING_URL env override", async () => {
@@ -228,6 +257,13 @@ describe("diffmode limits", () => {
           balance: 0,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         }),
       ),
     );

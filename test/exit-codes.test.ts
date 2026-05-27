@@ -14,6 +14,7 @@ describe("ExitCode constants (spec §8)", () => {
     expect(ExitCode.INSUFFICIENT_CREDITS).toBe(8);
     expect(ExitCode.SERVER).toBe(9);
     expect(ExitCode.INTERRUPTED_RESUMABLE).toBe(10);
+    expect(ExitCode.PRICING_UNAVAILABLE).toBe(11);
     expect(ExitCode.SIGINT).toBe(130);
   });
 });

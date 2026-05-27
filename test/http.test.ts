@@ -10,6 +10,7 @@ import {
   InsufficientCreditsError,
   NetworkError,
   NotFoundError,
+  PricingUnavailableError,
   RateLimitedError,
   ServerError,
   UsageError,
@@ -336,6 +337,42 @@ describe("HttpClient — status code → error mapping", () => {
     expect(thrown).toBeInstanceOf(ServerError);
     expect(thrown.exitCode).toBe(9);
     expect(thrown.retryable).toBe(true);
+  });
+
+  it("503 with backend PricingConfigError detail → PricingUnavailableError (exit 11)", async () => {
+    // Backend's api/credit_cost_store.py raises HTTPException(503,
+    // "Pricing configuration unavailable") whenever the credit_costs
+    // table can't answer. The CLI must route that to exit 11, not
+    // exit 9, so the README's fail-closed contract holds.
+    const c = makeClient({
+      status: 503,
+      body: { detail: "Pricing configuration unavailable" },
+    });
+    let thrown: any;
+    try {
+      await c.get("/billing/balance");
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(PricingUnavailableError);
+    expect(thrown.exitCode).toBe(11);
+    expect(thrown.code).toBe("pricing_unavailable");
+    expect(thrown.retryable).toBe(false);
+  });
+
+  it("503 without pricing detail → ServerError (regular outage stays exit 9)", async () => {
+    const c = makeClient({
+      status: 503,
+      body: { detail: "Service Unavailable" },
+    });
+    let thrown: any;
+    try {
+      await c.get("/billing/balance");
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(ServerError);
+    expect(thrown.exitCode).toBe(9);
   });
 
   it("500 → ServerError defaults retryable=true when envelope absent", async () => {

@@ -55,6 +55,13 @@ beforeEach(() => {
         balance: 9999,
         has_stripe_customer: true,
         has_purchased: true,
+        credit_costs: {
+          workflow: 2,
+          unlock: 2,
+          "idea-eval": 1,
+          "smoke-test": 1,
+          run: 0,
+        },
       }),
     ),
   );
@@ -141,6 +148,13 @@ describe("diffmode run (free-tier submit)", () => {
           balance: 9999,
           has_stripe_customer: true,
           has_purchased: true,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         });
       }),
       http.post(`${API_BASE}/analyze-website`, ({ request }) => {
@@ -509,10 +523,18 @@ describe("pre-flight credit check (cross-cutting)", () => {
     let submitCalled = false;
     server.use(
       http.get(`${API_BASE}/billing/balance`, () =>
+        // Web-channel costs so balance=0 trips the gate (CLI run is free).
         HttpResponse.json({
           balance: 0,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 15,
+            unlock: 15,
+            "idea-eval": 5,
+            "smoke-test": 1,
+            run: 1,
+          },
         }),
       ),
       http.post(`${API_BASE}/free-tier`, () => {
@@ -542,10 +564,18 @@ describe("pre-flight credit check (cross-cutting)", () => {
     let submitCalled = false;
     server.use(
       http.get(`${API_BASE}/billing/balance`, () =>
+        // Web-channel unlock cost (15) so balance=10 trips the gate.
         HttpResponse.json({
           balance: 10,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 15,
+            unlock: 15,
+            "idea-eval": 5,
+            "smoke-test": 1,
+            run: 1,
+          },
         }),
       ),
       http.post(`${API_BASE}/products/:pid/unlock`, () => {
@@ -565,10 +595,18 @@ describe("pre-flight credit check (cross-cutting)", () => {
     let submitCalled = false;
     server.use(
       http.get(`${API_BASE}/billing/balance`, () =>
+        // Web-channel idea-eval cost (5) so balance=2 trips the gate.
         HttpResponse.json({
           balance: 2,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 15,
+            unlock: 15,
+            "idea-eval": 5,
+            "smoke-test": 1,
+            run: 1,
+          },
         }),
       ),
       http.post(`${API_BASE}/idea-eval`, () => {
@@ -604,6 +642,13 @@ describe("pre-flight credit check (cross-cutting)", () => {
           balance: 0,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
         });
       }),
       http.post(`${API_BASE}/free-tier`, () => {
@@ -656,10 +701,18 @@ describe("pre-flight credit check (cross-cutting)", () => {
     let checkoutCalled = false;
     server.use(
       http.get(`${API_BASE}/billing/balance`, () =>
+        // Web-channel costs so balance=0 trips the gate (CLI run is free).
         HttpResponse.json({
           balance: 0,
           has_stripe_customer: false,
           has_purchased: false,
+          credit_costs: {
+            workflow: 15,
+            unlock: 15,
+            "idea-eval": 5,
+            "smoke-test": 1,
+            run: 1,
+          },
         }),
       ),
       http.post(`${API_BASE}/billing/checkout`, () => {
