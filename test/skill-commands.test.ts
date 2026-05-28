@@ -413,4 +413,49 @@ describe("diffmode skill uninstall", () => {
       ]),
     );
   });
+
+  it("reports `needs-confirm` when on-disk content differs and --yes is absent", async () => {
+    preinstall(claudePath, "HAND-EDITED CONTENT");
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          target: "claude",
+          action: "needs-confirm",
+        }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(true);
+    expect(readFileSync(claudePath, "utf8")).toBe("HAND-EDITED CONTENT");
+    expect(cap.stderr).toContain("--yes");
+    expect(cap.stderr).toContain("remove");
+  });
+
+  it("removes divergent content when --yes is passed and reports `removed`", async () => {
+    preinstall(claudePath, "HAND-EDITED CONTENT");
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      yes: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "removed" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(false);
+  });
 });
