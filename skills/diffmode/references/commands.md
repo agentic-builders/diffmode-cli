@@ -293,3 +293,24 @@ and exits. Override the redirect with `DIFFMODE_BILLING_URL`.
 - Skips a target gracefully when the parent tool's home dir is missing
   (e.g., Claude Code not installed) — non-fatal.
 - **Exits:** 0, 1, 2
+
+### `diffmode skill uninstall`
+
+- Removes the bundled skill files written by `skill install`.
+- **Flags:**
+  - `--target <claude|codex|cursor|all>` (default `all`)
+  - `--yes` removes a file whose on-disk content differs from the
+    bundled source (e.g., user-edited). Without it, the command reports
+    `needs-confirm` and writes nothing.
+  - `--dry-run` reports the action without writing
+  - `--print-paths` prints the resolved target paths and exits
+- **Actions emitted per target:**
+  - `removed` — file existed and was deleted
+  - `not-installed` — no file at the destination; no-op
+  - `needs-confirm` — file differs from bundled; re-run with `--yes`
+  - `would-remove` — `--dry-run` previewed a removal
+- **Empty-parent cleanup:** for claude/codex targets, the
+  `~/.<tool>/skills/diffmode/` directory is removed if empty after the
+  file delete. Cursor's `~/.cursor/rules/` directory is never removed
+  (belongs to Cursor).
+- **Exits:** 0, 1, 2

@@ -32,6 +32,7 @@ import { commandsCommand } from "./commands/commands";
 import {
   skillShowCommand,
   skillInstallCommand,
+  skillUninstallCommand,
   type SkillTargetSelector,
 } from "./commands/skill";
 import packageJson from "../package.json";
@@ -170,7 +171,7 @@ function registerSkillCommands(program: Command): void {
   const skill = program
     .command("skill")
     .description(
-      "Show or install the bundled diffmode SKILL.md / Cursor MDC for agent tools.",
+      "Show, install, or uninstall the bundled diffmode SKILL.md / Cursor MDC for agent tools.",
     );
 
   skill
@@ -220,6 +221,57 @@ function registerSkillCommands(program: Command): void {
         }
         try {
           await skillInstallCommand({
+            target,
+            yes: Boolean(cmdOpts.yes),
+            dryRun: Boolean(cmdOpts.dryRun),
+            printPaths: Boolean(cmdOpts.printPaths),
+            ...envOverrideTargetPaths(),
+          });
+        } catch (err) {
+          printError(err);
+        }
+      },
+    );
+
+  skill
+    .command("uninstall")
+    .description(
+      "Remove the bundled skill from Claude/Codex/Cursor agent dirs.",
+    )
+    .option(
+      "--target <name>",
+      "Which agent to uninstall for: claude | codex | cursor | all",
+      "all",
+    )
+    .option(
+      "--yes",
+      "Remove the file even when its content differs from the bundled source.",
+    )
+    .option("--dry-run", "Report what would happen without writing.")
+    .option("--print-paths", "Print the resolved paths and exit.")
+    .action(
+      async (cmdOpts: {
+        target?: string;
+        yes?: boolean;
+        dryRun?: boolean;
+        printPaths?: boolean;
+      }) => {
+        const target = (cmdOpts.target ?? "all") as SkillTargetSelector;
+        if (
+          target !== "all" &&
+          target !== "claude" &&
+          target !== "codex" &&
+          target !== "cursor"
+        ) {
+          printError(
+            new Error(
+              `Unknown --target ${target}. Use one of: claude, codex, cursor, all.`,
+            ),
+          );
+          return;
+        }
+        try {
+          await skillUninstallCommand({
             target,
             yes: Boolean(cmdOpts.yes),
             dryRun: Boolean(cmdOpts.dryRun),

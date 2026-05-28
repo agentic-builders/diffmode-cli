@@ -47,6 +47,7 @@ const EXIT_CODES_BY_COMMAND: Record<string, number[]> = {
   // skill installer (Task 10)
   "skill show": [0, 1],
   "skill install": [0, 1, 2],
+  "skill uninstall": [0, 1, 2],
 };
 
 export interface ManifestArg {

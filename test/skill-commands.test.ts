@@ -10,7 +10,11 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { skillShowCommand, skillInstallCommand } from "../src/commands/skill";
+import {
+  skillShowCommand,
+  skillInstallCommand,
+  skillUninstallCommand,
+} from "../src/commands/skill";
 import { resetOutputConfig, setOutputConfig } from "../src/lib/output";
 
 const SKILL_SAMPLE = `---
@@ -335,5 +339,281 @@ describe("diffmode skill install (write paths)", () => {
     );
     expect(cap.stderr).toContain("Claude");
     expect(existsSync(claudePath)).toBe(false);
+  });
+});
+
+describe("diffmode skill uninstall", () => {
+  // Helper: pre-populate destination with the bundled content
+  // (equivalent to running `skill install --target all` first).
+  function preinstall(dest: string, content: string): void {
+    mkdirSync(join(dest, ".."), { recursive: true });
+    writeFileSync(dest, content);
+  }
+
+  it("removes a matching file and reports `removed`", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.schema_version).toBe("1");
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "removed" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(false);
+  });
+
+  it("reports `not-installed` when the file is absent (no-op)", async () => {
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.schema_version).toBe("1");
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "not-installed" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(false);
+    expect(existsSync(codexPath)).toBe(false);
+    expect(existsSync(cursorPath)).toBe(false);
+  });
+
+  it("reports `not-installed` without reading the bundled source", async () => {
+    // Regression: previously, uninstall called readSource() before checking
+    // if the file existed, so a missing bundle aborted uninstall even when
+    // there was nothing to remove. Point skillRoot at an empty dir to prove
+    // the bundle is never read on the absent-file path.
+    const emptyRoot = join(workspace, "empty-skill-root");
+    mkdirSync(emptyRoot, { recursive: true });
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot: emptyRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "not-installed" }),
+      ]),
+    );
+  });
+
+  it("reports `needs-confirm` when on-disk content differs and --yes is absent", async () => {
+    preinstall(claudePath, "HAND-EDITED CONTENT");
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          target: "claude",
+          action: "needs-confirm",
+        }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(true);
+    expect(readFileSync(claudePath, "utf8")).toBe("HAND-EDITED CONTENT");
+    expect(cap.stderr).toContain("--yes");
+    expect(cap.stderr).toContain("remove");
+  });
+
+  it("removes divergent content when --yes is passed and reports `removed`", async () => {
+    preinstall(claudePath, "HAND-EDITED CONTENT");
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      yes: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "removed" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(false);
+  });
+
+  it("--dry-run reports `would-remove` and never writes (matching content)", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      dryRun: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.dry_run).toBe(true);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "would-remove" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(true);
+    expect(readFileSync(claudePath, "utf8")).toBe(SKILL_SAMPLE);
+  });
+
+  it("--dry-run with --yes on divergent content still reports `would-remove`", async () => {
+    preinstall(claudePath, "HAND-EDITED CONTENT");
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      yes: true,
+      dryRun: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "would-remove" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(true);
+  });
+
+  it("removes the empty `skills/diffmode/` parent dir for claude after deleting the file", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(claudePath)).toBe(false);
+    // `skills/diffmode/` should be gone (it only held SKILL.md)
+    expect(existsSync(join(claudePath, ".."))).toBe(false);
+  });
+
+  it("preserves a non-empty `skills/diffmode/` parent dir", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    // Drop a sibling file so the parent dir is non-empty after the unlink.
+    const sibling = join(claudePath, "..", "OTHER.md");
+    writeFileSync(sibling, "kept");
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(claudePath)).toBe(false);
+    expect(existsSync(sibling)).toBe(true);
+    expect(existsSync(join(claudePath, ".."))).toBe(true);
+  });
+
+  it("never removes the Cursor parent dir even if it would end up empty", async () => {
+    // cursorPath is `${workspace}/.cursor/rules/diffmode.mdc`.
+    // After deleting diffmode.mdc the `rules/` dir is empty, but we must
+    // not remove it — it belongs to Cursor, not to us.
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "cursor",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(cursorPath)).toBe(false);
+    expect(existsSync(join(cursorPath, ".."))).toBe(true); // `.cursor/rules/` survives
+  });
+
+  it("--print-paths returns resolved paths and never deletes", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    preinstall(codexPath, SKILL_SAMPLE);
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "all",
+      printPaths: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.schema_version).toBe("1");
+    expect(parsed.paths.claude).toBe(claudePath);
+    expect(parsed.paths.codex).toBe(codexPath);
+    expect(parsed.paths.cursor).toBe(cursorPath);
+    expect(existsSync(claudePath)).toBe(true);
+    expect(existsSync(codexPath)).toBe(true);
+    expect(existsSync(cursorPath)).toBe(true);
+  });
+
+  it("--target all removes all three when all are installed", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    preinstall(codexPath, SKILL_SAMPLE);
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.target).toBe("all");
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "removed" }),
+        expect.objectContaining({ target: "codex", action: "removed" }),
+        expect.objectContaining({ target: "cursor", action: "removed" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(false);
+    expect(existsSync(codexPath)).toBe(false);
+    expect(existsSync(cursorPath)).toBe(false);
+  });
+
+  it("--target cursor only touches the MDC file", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    preinstall(codexPath, SKILL_SAMPLE);
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "cursor",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(claudePath)).toBe(true);
+    expect(existsSync(codexPath)).toBe(true);
+    expect(existsSync(cursorPath)).toBe(false);
   });
 });

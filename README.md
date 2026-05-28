@@ -67,7 +67,7 @@ Requires Node ≥ 20.
 | `diffmode account` / `billing balance` / `history` | Read-only billing | — |
 | `diffmode limits` | Credits + rate-limit policy | — |
 | `diffmode diagnostics from-url/validate` | Founder-input helpers | — |
-| `diffmode skill show` / `skill install` | Agent skill installer | — |
+| `diffmode skill show` / `skill install` / `skill uninstall` | Agent skill installer | — |
 | `diffmode commands` | Machine-readable manifest | — |
 
 The credit column above is informational. **Actual cost is fetched live from the server** via `GET /billing/balance` (the response includes a `credit_costs` matrix for the caller's channel). CLI callers (PAT-authenticated) pay materially less than web callers — a `$199 / 15-credit` pack runs ~7 full pipelines from the CLI vs 1 from the browser. The table above shows current CLI prices; web prices are higher (workflow/unlock=15, idea-eval=5).
@@ -134,6 +134,25 @@ Override with the env vars `DIFFMODE_SKILL_CLAUDE_PATH`,
 `DIFFMODE_SKILL_CODEX_PATH`, `DIFFMODE_SKILL_CURSOR_PATH`.
 
 To preview the skill text without installing: `diffmode skill show`.
+
+To remove the installed skill:
+
+```bash
+# Uninstall from all three (default)
+diffmode skill uninstall
+
+# Or pick a target
+diffmode skill uninstall --target claude
+
+# Preview first
+diffmode skill uninstall --dry-run
+```
+
+If you've hand-edited the installed file, `uninstall` reports
+`needs-confirm` and writes nothing. Pass `--yes` to remove anyway. Empty
+`skills/diffmode/` parent directories are cleaned up automatically for
+Claude and Codex targets; the Cursor `~/.cursor/rules/` directory is
+left alone.
 
 ## Configuration
 

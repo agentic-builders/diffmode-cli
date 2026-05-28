@@ -5,6 +5,18 @@ All notable changes to the `diffmode` CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`diffmode skill uninstall`** — new subcommand that mirrors
+  `skill install`'s flag surface (`--target`, `--yes`, `--dry-run`,
+  `--print-paths`) and removes the bundled skill files. `--yes` is
+  required when the on-disk file differs from the bundled source so
+  hand-edited skills aren't silently deleted. Empty
+  `skills/diffmode/` parent directories are cleaned up for claude/codex
+  targets; the Cursor `~/.cursor/rules/` directory is never touched.
+
 ## [0.2.0] - 2026-05-27
 
 ### Changed
