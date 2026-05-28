@@ -458,4 +458,97 @@ describe("diffmode skill uninstall", () => {
     );
     expect(existsSync(claudePath)).toBe(false);
   });
+
+  it("--dry-run reports `would-remove` and never writes (matching content)", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      dryRun: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.dry_run).toBe(true);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "would-remove" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(true);
+    expect(readFileSync(claudePath, "utf8")).toBe(SKILL_SAMPLE);
+  });
+
+  it("--dry-run with --yes on divergent content still reports `would-remove`", async () => {
+    preinstall(claudePath, "HAND-EDITED CONTENT");
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      yes: true,
+      dryRun: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "would-remove" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(true);
+  });
+
+  it("removes the empty `skills/diffmode/` parent dir for claude after deleting the file", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(claudePath)).toBe(false);
+    // `skills/diffmode/` should be gone (it only held SKILL.md)
+    expect(existsSync(join(claudePath, ".."))).toBe(false);
+  });
+
+  it("preserves a non-empty `skills/diffmode/` parent dir", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    // Drop a sibling file so the parent dir is non-empty after the unlink.
+    const sibling = join(claudePath, "..", "OTHER.md");
+    writeFileSync(sibling, "kept");
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(claudePath)).toBe(false);
+    expect(existsSync(sibling)).toBe(true);
+    expect(existsSync(join(claudePath, ".."))).toBe(true);
+  });
+
+  it("never removes the Cursor parent dir even if it would end up empty", async () => {
+    // cursorPath is `${workspace}/.cursor/rules/diffmode.mdc`.
+    // After deleting diffmode.mdc the `rules/` dir is empty, but we must
+    // not remove it — it belongs to Cursor, not to us.
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "cursor",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(cursorPath)).toBe(false);
+    expect(existsSync(join(cursorPath, ".."))).toBe(true); // `.cursor/rules/` survives
+  });
 });
