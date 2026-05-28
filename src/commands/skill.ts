@@ -2,6 +2,9 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
+  rmdirSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -34,6 +37,19 @@ interface InstallResult {
   reason?: string;
 }
 
+type UninstallAction =
+  | "removed"
+  | "not-installed"
+  | "needs-confirm"
+  | "would-remove";
+
+interface UninstallResult {
+  target: SkillTarget;
+  path: string;
+  action: UninstallAction;
+  reason?: string;
+}
+
 const TARGET_LABELS: Record<SkillTarget, string> = {
   claude: "Claude Code",
   codex: "Codex",
@@ -45,6 +61,19 @@ export interface SkillShowOptions {
 }
 
 export interface SkillInstallOptions {
+  target?: SkillTargetSelector;
+  yes?: boolean;
+  dryRun?: boolean;
+  printPaths?: boolean;
+  skillRoot?: string;
+  // Resolved per-target target paths. bin.ts handles env-var override + home
+  // expansion before calling in; tests inject these directly.
+  claudePath?: string;
+  codexPath?: string;
+  cursorPath?: string;
+}
+
+export interface SkillUninstallOptions {
   target?: SkillTargetSelector;
   yes?: boolean;
   dryRun?: boolean;
@@ -167,6 +196,49 @@ function installOne(
   return { target, path: destPath, action: "updated" };
 }
 
+function uninstallOne(
+  target: SkillTarget,
+  source: string,
+  destPath: string,
+  yes: boolean,
+  dryRun: boolean,
+): UninstallResult {
+  if (!existsSync(destPath)) {
+    return { target, path: destPath, action: "not-installed" };
+  }
+
+  const current = readFileSync(destPath, "utf8");
+  if (current !== source && !yes) {
+    return {
+      target,
+      path: destPath,
+      action: "needs-confirm",
+      reason: "destination differs from bundled; re-run with --yes to remove",
+    };
+  }
+
+  if (dryRun) return { target, path: destPath, action: "would-remove" };
+
+  unlinkSync(destPath);
+
+  // Empty-parent cleanup: claude/codex own their `skills/diffmode/` parent
+  // (created by install's mkdir -p). Cursor's parent is `~/.cursor/rules/`
+  // which belongs to the tool itself — never touch it.
+  if (target === "claude" || target === "codex") {
+    const parent = dirname(destPath);
+    try {
+      if (existsSync(parent) && readdirSync(parent).length === 0) {
+        rmdirSync(parent);
+      }
+    } catch {
+      // Best-effort cleanup: ENOTEMPTY, ENOENT, EACCES — never fail the
+      // overall action because of a parent-dir hiccup.
+    }
+  }
+
+  return { target, path: destPath, action: "removed" };
+}
+
 export async function skillShowCommand(
   opts: SkillShowOptions = {},
 ): Promise<void> {
@@ -247,5 +319,55 @@ export async function skillInstallCommand(
     dry_run: dryRun,
     target: selector,
     installed: installed as unknown as Record<string, unknown>[],
+  });
+}
+
+export async function skillUninstallCommand(
+  opts: SkillUninstallOptions = {},
+): Promise<void> {
+  const root = opts.skillRoot ?? findBundledSkillRoot();
+  const defaults = defaultTargetPaths();
+  const claudePath = opts.claudePath ?? defaults.claude;
+  const codexPath = opts.codexPath ?? defaults.codex;
+  const cursorPath = opts.cursorPath ?? defaults.cursor;
+
+  const paths: Record<SkillTarget, string> = {
+    claude: claudePath,
+    codex: codexPath,
+    cursor: cursorPath,
+  };
+
+  if (opts.printPaths) {
+    printJson({ paths });
+    return;
+  }
+
+  const selector: SkillTargetSelector = opts.target ?? "all";
+  const targets = selectTargets(selector);
+  const dryRun = Boolean(opts.dryRun);
+  const yes = Boolean(opts.yes);
+
+  const uninstalled: UninstallResult[] = [];
+  for (const t of targets) {
+    let source: string;
+    try {
+      source = readSource(root, t);
+    } catch (err) {
+      printError(err);
+      return;
+    }
+    const result = uninstallOne(t, source, paths[t], yes, dryRun);
+    uninstalled.push(result);
+    if (result.action === "needs-confirm") {
+      printProgress(
+        `[skill] ${TARGET_LABELS[t]}: ${result.reason}. Re-run with --yes to remove.`,
+      );
+    }
+  }
+
+  printJson({
+    dry_run: dryRun,
+    target: selector,
+    uninstalled: uninstalled as unknown as Record<string, unknown>[],
   });
 }

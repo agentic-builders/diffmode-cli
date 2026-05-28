@@ -10,7 +10,11 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { skillShowCommand, skillInstallCommand } from "../src/commands/skill";
+import {
+  skillShowCommand,
+  skillInstallCommand,
+  skillUninstallCommand,
+} from "../src/commands/skill";
 import { resetOutputConfig, setOutputConfig } from "../src/lib/output";
 
 const SKILL_SAMPLE = `---
@@ -334,6 +338,53 @@ describe("diffmode skill install (write paths)", () => {
       ]),
     );
     expect(cap.stderr).toContain("Claude");
+    expect(existsSync(claudePath)).toBe(false);
+  });
+});
+
+describe("diffmode skill uninstall", () => {
+  // Helper: pre-populate destination with the bundled content
+  // (equivalent to running `skill install --target all` first).
+  function preinstall(dest: string, content: string): void {
+    mkdirSync(join(dest, ".."), { recursive: true });
+    writeFileSync(dest, content);
+  }
+
+  it("removes a matching file and reports `removed`", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.schema_version).toBe("1");
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "removed" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(false);
+  });
+
+  it("reports `not-installed` when the file is absent (no-op)", async () => {
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "not-installed" }),
+      ]),
+    );
     expect(existsSync(claudePath)).toBe(false);
   });
 });
