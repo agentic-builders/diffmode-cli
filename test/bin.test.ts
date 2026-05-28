@@ -122,13 +122,14 @@ describe("skill surface (Task 10)", () => {
     return program.commands.find((c) => c.name() === name);
   }
 
-  it("registers `skill` with `show` + `install` subcommands", () => {
+  it("registers `skill` with `show` + `install` + `uninstall` subcommands", () => {
     const program = buildProgram();
     const skill = findCmd(program, "skill");
     expect(skill).toBeDefined();
     const subs = skill!.commands.map((c) => c.name());
     expect(subs).toContain("show");
     expect(subs).toContain("install");
+    expect(subs).toContain("uninstall");
   });
 
   it("`skill install` exposes --target/--yes/--dry-run/--print-paths", () => {
@@ -138,6 +139,19 @@ describe("skill surface (Task 10)", () => {
     );
     expect(install).toBeDefined();
     const flags = install!.options.map((o) => o.long);
+    expect(flags).toContain("--target");
+    expect(flags).toContain("--yes");
+    expect(flags).toContain("--dry-run");
+    expect(flags).toContain("--print-paths");
+  });
+
+  it("`skill uninstall` exposes --target/--yes/--dry-run/--print-paths", () => {
+    const program = buildProgram();
+    const uninstall = findCmd(program, "skill")!.commands.find(
+      (c) => c.name() === "uninstall",
+    );
+    expect(uninstall).toBeDefined();
+    const flags = uninstall!.options.map((o) => o.long);
     expect(flags).toContain("--target");
     expect(flags).toContain("--yes");
     expect(flags).toContain("--dry-run");
