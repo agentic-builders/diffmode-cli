@@ -380,11 +380,37 @@ describe("diffmode skill uninstall", () => {
       cursorPath,
     });
     const parsed = JSON.parse(cap.stdout);
+    expect(parsed.schema_version).toBe("1");
     expect(parsed.uninstalled).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ target: "claude", action: "not-installed" }),
       ]),
     );
     expect(existsSync(claudePath)).toBe(false);
+    expect(existsSync(codexPath)).toBe(false);
+    expect(existsSync(cursorPath)).toBe(false);
+  });
+
+  it("reports `not-installed` without reading the bundled source", async () => {
+    // Regression: previously, uninstall called readSource() before checking
+    // if the file existed, so a missing bundle aborted uninstall even when
+    // there was nothing to remove. Point skillRoot at an empty dir to prove
+    // the bundle is never read on the absent-file path.
+    const emptyRoot = join(workspace, "empty-skill-root");
+    mkdirSync(emptyRoot, { recursive: true });
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot: emptyRoot,
+      target: "claude",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "not-installed" }),
+      ]),
+    );
   });
 });

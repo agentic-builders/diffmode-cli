@@ -349,6 +349,11 @@ export async function skillUninstallCommand(
 
   const uninstalled: UninstallResult[] = [];
   for (const t of targets) {
+    const destPath = paths[t];
+    if (!existsSync(destPath)) {
+      uninstalled.push({ target: t, path: destPath, action: "not-installed" });
+      continue;
+    }
     let source: string;
     try {
       source = readSource(root, t);
@@ -356,7 +361,7 @@ export async function skillUninstallCommand(
       printError(err);
       return;
     }
-    const result = uninstallOne(t, source, paths[t], yes, dryRun);
+    const result = uninstallOne(t, source, destPath, yes, dryRun);
     uninstalled.push(result);
     if (result.action === "needs-confirm") {
       printProgress(
