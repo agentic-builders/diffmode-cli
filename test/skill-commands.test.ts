@@ -551,4 +551,69 @@ describe("diffmode skill uninstall", () => {
     expect(existsSync(cursorPath)).toBe(false);
     expect(existsSync(join(cursorPath, ".."))).toBe(true); // `.cursor/rules/` survives
   });
+
+  it("--print-paths returns resolved paths and never deletes", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    preinstall(codexPath, SKILL_SAMPLE);
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "all",
+      printPaths: true,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.schema_version).toBe("1");
+    expect(parsed.paths.claude).toBe(claudePath);
+    expect(parsed.paths.codex).toBe(codexPath);
+    expect(parsed.paths.cursor).toBe(cursorPath);
+    expect(existsSync(claudePath)).toBe(true);
+    expect(existsSync(codexPath)).toBe(true);
+    expect(existsSync(cursorPath)).toBe(true);
+  });
+
+  it("--target all removes all three when all are installed", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    preinstall(codexPath, SKILL_SAMPLE);
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    const cap = captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    const parsed = JSON.parse(cap.stdout);
+    expect(parsed.target).toBe("all");
+    expect(parsed.uninstalled).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "claude", action: "removed" }),
+        expect.objectContaining({ target: "codex", action: "removed" }),
+        expect.objectContaining({ target: "cursor", action: "removed" }),
+      ]),
+    );
+    expect(existsSync(claudePath)).toBe(false);
+    expect(existsSync(codexPath)).toBe(false);
+    expect(existsSync(cursorPath)).toBe(false);
+  });
+
+  it("--target cursor only touches the MDC file", async () => {
+    preinstall(claudePath, SKILL_SAMPLE);
+    preinstall(codexPath, SKILL_SAMPLE);
+    preinstall(cursorPath, CURSOR_SAMPLE);
+    captureStreams();
+    await skillUninstallCommand({
+      skillRoot,
+      target: "cursor",
+      claudePath,
+      codexPath,
+      cursorPath,
+    });
+    expect(existsSync(claudePath)).toBe(true);
+    expect(existsSync(codexPath)).toBe(true);
+    expect(existsSync(cursorPath)).toBe(false);
+  });
 });
