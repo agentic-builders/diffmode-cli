@@ -5,6 +5,12 @@ All notable changes to the `diffmode` CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`diffmode limits` now reports the account's real rate-limit policy** instead of a hardcoded `3 runs / 24 h`. The policy is sourced from new `rate_limit_max` / `rate_limit_window_h` fields on `GET /billing/balance`: exempt accounts (purchased / operator-allowlisted) report `rate_limit_max: null` / `rate_limit_window_h: null` (no cap); free accounts report the server's actual free-tier values. When the server omits the fields (older backend) the CLI falls back to the documented `3` / `24`. Requires the backend with the server-sourced policy deployed (hyperskill/ai-cmo). Fixes [#6](https://github.com/agentic-builders/diffmode-cli/issues/6) (Part 1). Additive on `schema_version: "1"`; old clients ignore the new fields.
+
 ## [0.3.0] - 2026-05-28
 
 ### Added

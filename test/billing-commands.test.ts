@@ -239,6 +239,7 @@ describe("diffmode limits", () => {
     expect(parsed.rate_limit_window_h).toBe(24);
     expect(parsed.rate_limit_max).toBe(3);
     expect(parsed.billing_url).toBe("https://diffmode.app/app/billing");
+    // No server rate_limit_* fields (old API) → CLI falls back to constants.
     // Plan: does NOT estimate free_submits_remaining
     expect(parsed.free_submits_remaining).toBeUndefined();
     // Channel-aware credit costs surfaced verbatim from /billing/balance.
@@ -249,6 +250,59 @@ describe("diffmode limits", () => {
       "smoke-test": 1,
       run: 0,
     });
+  });
+
+  it("sources the rate-limit policy from the server", async () => {
+    server.use(
+      http.get(`${API_BASE}/billing/balance`, () =>
+        HttpResponse.json({
+          balance: 4,
+          has_stripe_customer: false,
+          has_purchased: false,
+          rate_limit_max: 5,
+          rate_limit_window_h: 24,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
+        }),
+      ),
+    );
+    const cap = captureStreams();
+    await limitsCommand({ apiBase: API_BASE, token: TOKEN });
+    const parsed = JSON.parse(cap.stdout.trim());
+    expect(parsed.rate_limit_max).toBe(5);
+    expect(parsed.rate_limit_window_h).toBe(24);
+  });
+
+  it("reports no cap (null) for an exempt/purchased account", async () => {
+    server.use(
+      http.get(`${API_BASE}/billing/balance`, () =>
+        HttpResponse.json({
+          balance: 100,
+          has_stripe_customer: true,
+          has_purchased: true,
+          rate_limit_max: null,
+          rate_limit_window_h: null,
+          credit_costs: {
+            workflow: 2,
+            unlock: 2,
+            "idea-eval": 1,
+            "smoke-test": 1,
+            run: 0,
+          },
+        }),
+      ),
+    );
+    const cap = captureStreams();
+    await limitsCommand({ apiBase: API_BASE, token: TOKEN });
+    const parsed = JSON.parse(cap.stdout.trim());
+    expect(parsed.has_purchased).toBe(true);
+    expect(parsed.rate_limit_max).toBeNull();
+    expect(parsed.rate_limit_window_h).toBeNull();
   });
 
   it("respects DIFFMODE_BILLING_URL env override", async () => {

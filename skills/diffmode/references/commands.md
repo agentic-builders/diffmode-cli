@@ -229,8 +229,11 @@ posting unless `--no-preflight` is set.
 
 ### `diffmode limits`
 
-- Derives credit availability from `/billing/balance` plus the documented
-  rate-limit policy (3 submissions / 24 h for non-paying).
+- Derives credit availability from `/billing/balance`, and reports the
+  rate-limit policy the server returns there (`rate_limit_max` /
+  `rate_limit_window_h`). `null` means no cap — exempt accounts (purchased
+  or operator-allowlisted). When the server omits the fields (older
+  backend), falls back to the documented `3` submissions / `24` h default.
 - **Exits:** 0, 1, 3, 4, 9
 - Does NOT estimate `free_submits_remaining` — the backend doesn't expose
   remaining slots and a CLI-local guess would lie across devices.

@@ -14,6 +14,8 @@ export interface CreditBalancePayload {
     "smoke-test": number;
     run: number;
   };
+  rate_limit_max?: number | null;
+  rate_limit_window_h?: number | null;
 }
 
 export type PreflightAction =
