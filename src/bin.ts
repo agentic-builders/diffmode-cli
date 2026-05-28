@@ -171,7 +171,7 @@ function registerSkillCommands(program: Command): void {
   const skill = program
     .command("skill")
     .description(
-      "Show or install the bundled diffmode SKILL.md / Cursor MDC for agent tools.",
+      "Show, install, or uninstall the bundled diffmode SKILL.md / Cursor MDC for agent tools.",
     );
 
   skill
