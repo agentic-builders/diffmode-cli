@@ -58,7 +58,7 @@ All submit commands accept `--idempotency-key <uuid>` (optional, no
 auto-generation). The CLI does a pre-flight `GET /billing/balance` before
 posting unless `--no-preflight` is set.
 
-### `diffmode run <product>` (default, **1 credit**)
+### `diffmode run <product>` (default, **0 credits via CLI**)
 
 - **Endpoint:** `POST /public/v1/free-tier`
 - **Required input:** `--input <file|->` or `--from-url <url>` (founder
@@ -72,14 +72,14 @@ posting unless `--no-preflight` is set.
   diffmode run myproduct --from-url https://example.com --json
   ```
 
-### `diffmode workflow <product>` (**15 credits**)
+### `diffmode workflow <product>` (**2 credits via CLI**)
 
 - **Endpoint:** `POST /public/v1/workflow`
 - Cold-start full plan. Power-user verb.
 - **Flags:** identical surface to `run`.
 - **Exits:** 0, 1, 2, 3, 4, 5, 7, 8, 9
 
-### `diffmode unlock <product>` (**15 credits**)
+### `diffmode unlock <product>` (**2 credits via CLI**)
 
 - **Endpoint:** `POST /public/v1/products/{id}/unlock`
 - Server reuses the founder input from the prior completed free-tier run;
@@ -88,7 +88,7 @@ posting unless `--no-preflight` is set.
 - **Flags:** `--idempotency-key`, `--no-preflight`
 - **Exits:** 0, 1, 2, 3, 4, 5, 7, 8, 9
 
-### `diffmode idea-eval <product>` (**5 credits**)
+### `diffmode idea-eval <product>` (**1 credit via CLI**)
 
 - **Endpoint:** `POST /public/v1/idea-eval`
 - **Required input:** `--ideas-file <path>` — JSON array of `IdeaInput`

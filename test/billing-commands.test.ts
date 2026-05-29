@@ -238,7 +238,7 @@ describe("diffmode limits", () => {
     expect(parsed.has_purchased).toBe(false);
     expect(parsed.rate_limit_window_h).toBe(24);
     expect(parsed.rate_limit_max).toBe(3);
-    expect(parsed.billing_url).toBe("https://diffmode.app/app/billing");
+    expect(parsed.billing_url).toBe("https://diffmode.app/app/billing?channel=cli");
     // No server rate_limit_* fields (old API) → CLI falls back to constants.
     // Plan: does NOT estimate free_submits_remaining
     expect(parsed.free_submits_remaining).toBeUndefined();
@@ -326,6 +326,6 @@ describe("diffmode limits", () => {
     const cap = captureStreams();
     await limitsCommand({ apiBase: API_BASE, token: TOKEN });
     const parsed = JSON.parse(cap.stdout.trim());
-    expect(parsed.billing_url).toBe("https://staging.diffmode.app/app/billing");
+    expect(parsed.billing_url).toBe("https://staging.diffmode.app/app/billing?channel=cli");
   });
 });
