@@ -254,7 +254,7 @@ describe("diffmode run (free-tier submit)", () => {
       ).rejects.toThrow(/__exit__:8/);
       const err = JSON.parse(cap.stderr);
       expect(err.error.billing_url).toBe(
-        "https://billing.internal.example/topup",
+        "https://billing.internal.example/topup?channel=cli",
       );
     } finally {
       if (original === undefined) delete process.env["DIFFMODE_BILLING_URL"];
