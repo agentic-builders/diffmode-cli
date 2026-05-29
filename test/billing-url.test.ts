@@ -51,4 +51,25 @@ describe("resolveBillingUrl", () => {
       resolveBillingUrl({ env: { DIFFMODE_BILLING_URL: "https://x.example/billing?ref=abc" } }),
     ).toBe("https://x.example/billing?ref=abc&channel=cli");
   });
+
+  it("overwrites an existing channel param instead of duplicating it", () => {
+    expect(
+      resolveBillingUrl({ override: "https://x.example/billing?channel=web" }),
+    ).toBe("https://x.example/billing?channel=cli");
+  });
+
+  it("keeps the query before the fragment on an absolute URL", () => {
+    expect(resolveBillingUrl({ override: "https://x.example/billing#help" })).toBe(
+      "https://x.example/billing?channel=cli#help",
+    );
+  });
+
+  it("handles a relative URL: query before fragment, no duplicate channel", () => {
+    expect(resolveBillingUrl({ override: "/app/billing#help" })).toBe(
+      "/app/billing?channel=cli#help",
+    );
+    expect(resolveBillingUrl({ override: "/app/billing?channel=web" })).toBe(
+      "/app/billing?channel=cli",
+    );
+  });
 });
