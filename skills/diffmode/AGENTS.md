@@ -22,7 +22,7 @@ Agent-drivable CLI for the Diffmode growth pipeline.
 - **Founder input** is required for `run`, `workflow`, `smoke-test`. Use `--input` or
   `--from-url`. `unlock` reuses the prior free-tier's input.
 - `idea-eval` takes a JSON array (not strings) — see `references/idea-input-schema.md`.
-- **Billing is browser-only.** On exit 8, redirect user to https://diffmode.app/app/billing.
+- **Billing is browser-only.** On exit 8, redirect user to https://diffmode.app/app/billing?channel=cli.
 
 ## Exit codes (spec §8)
 `0` ok · `1` generic · `2` usage · `3` network · `4` auth ·

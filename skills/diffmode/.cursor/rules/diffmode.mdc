@@ -23,7 +23,7 @@ Use the `diffmode` CLI to operate the hosted growth-strategy API.
 - Always pass `--json`. Stdout = data; stderr = progress/errors.
 - Generate your own UUIDv4 for `--idempotency-key` (CLI never auto-generates).
 - `--input founder.json` required for `run`/`workflow`/`smoke-test`.
-- On exit 8, redirect user to https://diffmode.app/app/billing. No CLI top-up command exists.
+- On exit 8, redirect user to https://diffmode.app/app/billing?channel=cli. No CLI top-up command exists.
 - Exit codes: `4` auth · `5` conflict (job_id in stderr) · `7` rate-limited ·
   `8` insufficient-credits · `10` interrupted-resumable.
 

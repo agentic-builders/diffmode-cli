@@ -19,6 +19,8 @@ export const OUTPUT_BANNER =
 const REPO_URL = "https://github.com/agentic-builders/diffmode-cli";
 const APP_URL = "https://diffmode.app";
 const BILLING_URL = "https://diffmode.app/app/billing";
+// Out-of-credits redirect lands users on the CLI credit-packs view.
+const BILLING_REDIRECT_URL = `${BILLING_URL}?channel=cli`;
 
 export interface CompanionOutputs {
   agents: string;
@@ -63,7 +65,7 @@ function renderAgents(): string {
     `- **Founder input** is required for \`run\`, \`workflow\`, \`smoke-test\`. Use \`--input\` or`,
     `  \`--from-url\`. \`unlock\` reuses the prior free-tier's input.`,
     `- \`idea-eval\` takes a JSON array (not strings) — see \`references/idea-input-schema.md\`.`,
-    `- **Billing is browser-only.** On exit 8, redirect user to ${BILLING_URL}.`,
+    `- **Billing is browser-only.** On exit 8, redirect user to ${BILLING_REDIRECT_URL}.`,
     ``,
     `## Exit codes (spec §8)`,
     `\`0\` ok · \`1\` generic · \`2\` usage · \`3\` network · \`4\` auth ·`,
@@ -105,7 +107,7 @@ function renderCursor(): string {
     `- Always pass \`--json\`. Stdout = data; stderr = progress/errors.`,
     `- Generate your own UUIDv4 for \`--idempotency-key\` (CLI never auto-generates).`,
     `- \`--input founder.json\` required for \`run\`/\`workflow\`/\`smoke-test\`.`,
-    `- On exit 8, redirect user to ${BILLING_URL}. No CLI top-up command exists.`,
+    `- On exit 8, redirect user to ${BILLING_REDIRECT_URL}. No CLI top-up command exists.`,
     `- Exit codes: \`4\` auth · \`5\` conflict (job_id in stderr) · \`7\` rate-limited ·`,
     `  \`8\` insufficient-credits · \`10\` interrupted-resumable.`,
     ``,
