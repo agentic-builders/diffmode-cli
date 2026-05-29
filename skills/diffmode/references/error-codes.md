@@ -13,7 +13,7 @@ scripts branch on them. The table below is verbatim from spec §8.
 | `5` | CONFLICT (409) | A job is already running for this product. | Parse stderr `error.job_id`; switch to `diffmode jobs watch <id>`. |
 | `6` | NOT_FOUND | 404 from server (unknown job id, missing product). | Verify the id/product slug. |
 | `7` | RATE_LIMITED (429) | Free-tier limit (3 submits / 24 h) or `Retry-After` set. | Honor `error.retry_after` (seconds); sleep and retry. |
-| `8` | INSUFFICIENT_CREDITS (402) | Pre-flight or server rejected the submit. | Print `error.billing_url`; instruct the user to top up at `https://diffmode.app/app/billing`. **Do not retry.** |
+| `8` | INSUFFICIENT_CREDITS (402) | Pre-flight or server rejected the submit. | Print `error.billing_url` from the error payload (e.g. `https://diffmode.app/app/billing?channel=cli`). **Do not retry.** |
 | `9` | SERVER | 5xx. | If `error.retryable === true`, retry with backoff. Otherwise stop and surface. |
 | `10` | INTERRUPTED_RESUMABLE | Server marked the job interrupted (deploy/rotation). | Run `diffmode jobs resume <id>` once, then `diffmode jobs watch <id>` again. |
 | `130` | SIGINT | User hit Ctrl-C. | Print resume hint (the server job is still running); do NOT auto-cancel. |
@@ -58,13 +58,13 @@ Browser-only top-up. The CLI **never** calls `POST /billing/checkout`. The
 error payload includes the billing URL the CLI resolves at runtime:
 
 ```json
-{"error": {"code": "insufficient_credits", "message": "...", "retryable": false, "billing_url": "https://diffmode.app/app/billing"}}
+{"error": {"code": "insufficient_credits", "message": "...", "retryable": false, "billing_url": "https://diffmode.app/app/billing?channel=cli"}}
 ```
 
 Tell the user, do not retry:
 
 ```
-You're out of credits. Top up at https://diffmode.app/app/billing,
+You're out of credits. Top up at https://diffmode.app/app/billing?channel=cli,
 then re-run `diffmode run <product>`.
 ```
 

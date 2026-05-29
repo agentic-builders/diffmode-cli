@@ -23,9 +23,9 @@ into your context** — always work through the manifest emitted by
 
 - For generic marketing advice not tied to a Diffmode product.
 - If the user wants to top up credits — Diffmode billing is **browser-only**.
-  On exit 8, redirect them to `https://diffmode.app/app/billing` (or the
-  resolver URL in the error payload). There is no `diffmode billing topup`
-  command.
+  On exit 8, use the `billing_url` from the error payload (e.g.
+  `https://diffmode.app/app/billing?channel=cli` — the CLI credit-packs view).
+  There is no `diffmode billing topup` command.
 - If `diffmode` is not installed — instruct the user to run
   `npx diffmode@latest login` once, then resume.
 
@@ -61,10 +61,12 @@ into your context** — always work through the manifest emitted by
    `npx diffmode@latest login` (or `diffmode login --token dm_pat_…`) in
    their terminal, then resume.
 2. **Pre-flight credits.**
-   `diffmode limits --json` → if `credits_available < N` (1 for `run`/
-   `smoke-test`, 5 for `idea-eval`, 15 for `unlock`/`workflow`), echo the
-   `billing_url` and stop. The CLI's submit also does this pre-flight by
-   default; `--no-preflight` skips it.
+   `diffmode limits --json` → read `credit_costs` for the exact per-action
+   cost (CLI channel: `run`=0, `smoke-test`=1, `idea-eval`=1, `unlock`=2,
+   `workflow`=2). If `credits_available` is below the cost of your intended
+   action, echo the `billing_url` and stop. Don't hardcode costs — read them
+   from the server `credit_costs` matrix. The CLI's submit also does this
+   pre-flight by default; `--no-preflight` skips it.
 3. **Submit a run (default = free-tier, 1 credit).**
    Generate a UUIDv4 and run
    `diffmode run <product> --input founder.json --idempotency-key <uuid> --json`.
@@ -93,7 +95,7 @@ into your context** — always work through the manifest emitted by
      valid tactic ids/names via `--stage growthPlan --summary --json`).
    - Always page large files with `--max-tokens 4000` unless the user asks
      for the full file.
-7. **Optional unlock (15 credits).**
+7. **Optional unlock (2 credits via CLI).**
    `diffmode unlock <product> --idempotency-key <uuid> --json`. Requires a
    completed `diffmode run` for the same product first — on 422, prompt the
    user to run free-tier first.
@@ -117,7 +119,7 @@ into your context** — always work through the manifest emitted by
 | 4 | Auth | Ask the user to `diffmode login`. |
 | 5 | Conflict (in-flight job) | Parse `error.job_id`; jump to step 4 (watch). |
 | 7 | Rate limited | Sleep `error.retry_after` (or surface if > 5 min). |
-| 8 | Insufficient credits | Print `billing_url` from the error; stop. |
+| 8 | Insufficient credits | Print `billing_url` from the error payload (e.g. `https://diffmode.app/app/billing?channel=cli`); stop. There is no `diffmode billing topup` command. |
 | 10 | Interrupted (resumable) | `diffmode jobs resume <id>` once, re-watch. |
 | 130 | SIGINT | Confirm whether to re-watch — do NOT auto-cancel. |
 
@@ -133,4 +135,4 @@ See `references/error-codes.md` for every code + per-command coverage.
 - `references/idea-input-schema.md` — `IdeaInput` array shape for
   `--ideas-file`.
 - `https://github.com/agentic-builders/diffmode-cli` — repo + issue tracker.
-- `https://diffmode.app` — top-up + dashboard (browser-only billing).
+- `https://diffmode.app` — top-up + dashboard (browser-only billing; CLI credit-packs view at `https://diffmode.app/app/billing?channel=cli`).

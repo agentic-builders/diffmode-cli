@@ -32,13 +32,14 @@ diffmode jobs watch <job_id>
 # 4. Download outputs + emit a manifest
 diffmode results my-product
 
-# 5. Optionally unlock the full plan (15 credits)
+# 5. Optionally unlock the full plan (2 credits via CLI)
 diffmode unlock my-product
 ```
 
 Top-up is **browser-only by design** — `diffmode` never prompts for a card
 or invokes Stripe. When you run out of credits, the CLI exits with code 8
-and a message pointing to `https://diffmode.app/app/billing`.
+and a message pointing to `https://diffmode.app/app/billing?channel=cli`
+(the CLI credit-packs view: Starter $20/10 cr · Builder $40/30 cr · Scale $99/100 cr).
 
 ## Install
 
@@ -93,7 +94,7 @@ of falling back to a stale local constant.
 | `5` | Conflict (in-flight job for the same product) |
 | `6` | Not found |
 | `7` | Rate-limited (Retry-After) |
-| `8` | Insufficient credits (top up via the browser) |
+| `8` | Insufficient credits (top up via browser at `https://diffmode.app/app/billing?channel=cli`) |
 | `9` | Server (5xx) |
 | `10` | Interrupted but resumable (`diffmode jobs resume`) |
 | `11` | Pricing config unavailable (server's `credit_costs` table unreachable) |
@@ -171,7 +172,7 @@ A `~/.config/diffmode/config.json` profile registry is planned for Phase 2;
 | --- | --- | --- |
 | `DIFFMODE_TOKEN` | PAT (overrides stored, beaten by `--token`) | — |
 | `DIFFMODE_API_BASE` | API base URL | `https://ai-cmo-api.onrender.com/public/v1` |
-| `DIFFMODE_BILLING_URL` | Billing redirect URL | `https://diffmode.app/app/billing` |
+| `DIFFMODE_BILLING_URL` | Billing redirect base URL (`?channel=cli` is appended automatically) | `https://diffmode.app/app/billing` |
 | `DIFFMODE_PROFILE` | Active profile name (overridden by `--profile`) | `default` |
 | `DIFFMODE_SKILL_CLAUDE_PATH` | Override Claude skill install target | `~/.claude/skills/diffmode/SKILL.md` |
 | `DIFFMODE_SKILL_CODEX_PATH` | Override Codex skill install target | `~/.codex/skills/diffmode/SKILL.md` |
